@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Portafolio web de ilustración" />
+    <title>Portafolio</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <header class="front-header flex-center">
+        <div class="front-header__title">
+          <h1 class="big-title">
+            <div class="align-left">Vanessa</div>
+            <div class="align-right">Perdomo</div>
+          </h1>
+          <h3 class="align-center">Ilustradora</h3>
+        </div>
+      </header>
+      <div class="btn-nav pos-fixed" id="btn-menu">
+        <img src="icons/bars-solid.svg" alt="Botón de menu" />
+      </div>
+      <div class="btn-scroll-top pos-fixed" id="btn-scroll-top">
+        <img src="icons/arrow-left-long-solid.svg" alt="Botón de scroll" />
+      </div>
+      <section class="main-grid">
+        <nav class="nav-menu" id="nav-menu">
+          <ul class="nav-menu__ul">
+            <li><a href="#section-1">Sección 1</a></li>
+            <li><a href="#section-2">Sección 2</a></li>
+            <li><a href="#section-3">Sección 3</a></li>
+          </ul>
+        </nav>
+        <section>
+          <article>
+            <header class="sect-title sect-title--1">
+              <div class="sect-title__div flex-center">
+                <h2 class="title" id="section-1">Sección 1</h2>
+              </div>
+            </header>
+            <div
+              class="images-container l-content js-img-container"
+              data-sect="section-1"
+            >
+              <img class="cont-1-img-1" src="img/spoons.jpg" alt="Cucharas" />
+              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img class="cont-1-img-2" src="img/spoons.jpg" alt="Cucharas" />
+            </div>
+          </article>
+          <article>
+            <header>
+              <div>
+                <h2 id="section-2">Sección 2</h2>
+              </div>
+            </header>
+            <div class="js-img-container" data-sect="section-2">
+              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img src="img/spoons.jpg" alt="Cucharas" />
+            </div>
+          </article>
+          <article>
+            <header>
+              <div>
+                <h2 id="section-3">Sección 3</h2>
+              </div>
+            </header>
+            <div class="js-img-container" data-sect="section-3">
+              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img src="img/spoons.jpg" alt="Cucharas" />
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+    <template id="visulizer-template">
+      <section class="image-visualizer full-screen">
+        <div>
+          <h3>Nombre sección</h3>
+          <button>Volver</button>
+        </div>
+        <div></div>
+        <div></div>
+      </section>
+    </template>
+  </body>
+  <script src="script.js"></script>
+</html>
