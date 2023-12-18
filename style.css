@@ -145,12 +145,36 @@ img {
   grid-auto-flow: dense;
 }
 
-.image-visualizer {
+.visualizer {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 30;
   background-color: #f005;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.visualizer__header {
+  display: flex;
+  justify-content: space-between;
+  background-color: var(--color-reseda-green-dark);
+  padding: 1rem;
+}
+
+.visualizer__tiny-images {
+  display: flex;
+  flex-wrap: nowrap;
+  background-color: var(--color-reseda-green-dark);
+  overflow-x: scroll;
+}
+
+.visualizer__tiny-image {
+  display: block;
+  margin: 1rem;
+  height: 80px;
+  width: auto;
+  cursor: pointer;
 }
 
 .grid-3 > .cont-1-img-1 {

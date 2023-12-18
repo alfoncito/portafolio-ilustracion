@@ -1,28 +1,34 @@
 const main = () => {
-  menuCtrl();
-  gridImages();
+  app();
   btnScroll();
-  imageVisualizer();
 };
 
 const app = () => {
-  let largeMedia = matchMedia("(min-width: 1024px)"),
-    middleMedia = matchMedia("(min-width: 480px)"),
-    menu,
-    visualizer,
-    scrollButton;
+  let media = {
+      large: matchMedia("(min-width: 1024px)"),
+      middle: matchMedia("(min-width: 480px)"),
+    },
+    menu = menuCtrl(),
+    gridImages = gridImagesCtrl(),
+    visualizer = imageVisualizerCtrl();
 
   const handleChangeMedia = () => {
-    if (largeMedia.matches) {
-    } else if (middleMedia.matches) {
-    } else {
-    }
+    menu.handleMedia(media);
+    gridImages.handleMedia(media);
   };
+
+  const handleClick = (e) => {
+    visualizer.handleClick(e);
+  };
+
+  media.large.addEventListener("change", handleChangeMedia);
+  media.middle.addEventListener("change", handleChangeMedia);
+  document.addEventListener("click", handleClick);
+  handleChangeMedia();
 };
 
 const menuCtrl = () => {
-  let media = matchMedia("(min-width: 1024px)"),
-    $menu = document.getElementById("nav-menu"),
+  let $menu = document.getElementById("nav-menu"),
     $btnClose = null;
 
   const showMenu = () => $menu.classList.add("nav-menu--show");
@@ -57,8 +63,8 @@ const menuCtrl = () => {
     $btnClose = null;
   };
 
-  const configMenu = (media) => {
-    if (media.matches) {
+  const handleMedia = (media) => {
+    if (media.large.matches) {
       document.removeEventListener("click", handleClickMenu);
       desktop();
     } else {
@@ -67,22 +73,20 @@ const menuCtrl = () => {
     }
   };
 
-  media.addEventListener("change", (e) => configMenu(e));
-
-  configMenu(media);
+  return {
+    handleMedia,
+  };
 };
 
-const gridImages = () => {
-  let media1 = matchMedia("(min-width: 480px)"),
-    media2 = matchMedia("(min-width: 1024px)"),
+const gridImagesCtrl = () => {
+  let $containers = document.querySelectorAll(".js-img-container"),
     currentClass = "";
 
-  const configGrid = () => {
-    let $containers = document.querySelectorAll(".js-img-container"),
-      nextClass = "";
+  const handleMedia = (media) => {
+    let nextClass = "";
 
-    if (media2.matches) nextClass = "grid-3";
-    else if (media1.matches) nextClass = "grid-2";
+    if (media.large.matches) nextClass = "grid-3";
+    else if (media.middle.matches) nextClass = "grid-2";
     else nextClass = "grid-1";
 
     $containers.forEach(($container) => {
@@ -92,9 +96,7 @@ const gridImages = () => {
     currentClass = nextClass;
   };
 
-  media1.addEventListener("change", configGrid);
-  media2.addEventListener("change", configGrid);
-  configGrid();
+  return { handleMedia };
 };
 
 const btnScroll = () => {
@@ -110,16 +112,62 @@ const btnScroll = () => {
   });
 };
 
-const imageVisualizer = () => {
-  document.addEventListener("click", (e) => {
-    if (e.target.tagName === "IMG") {
-      let $template = document
-        .getElementById("visulizer-template")
-        .content.firstElementChild.cloneNode(true);
+const imageVisualizerCtrl = () => {
+  const LISTEN = 0,
+    OPEN = 1;
 
-      document.body.appendChild($template);
+  let images,
+    state = LISTEN,
+    imageIndex = null,
+    $visualizer = null,
+    $tinyImages = null;
+
+  const renderVisualizer = (img) => {
+    $visualizer = document
+      .getElementById("visulizer-template")
+      .content.firstElementChild.cloneNode(true);
+
+    images = imagesGallery();
+    imageIndex = images.findIndex((image) => image.node === img);
+    document.body.appendChild($visualizer);
+    $tinyImages = document.getElementById("tiny-images");
+    renderTinyImages();
+  };
+
+  const renderTinyImages = () => {
+    let $frag = document.createDocumentFragment();
+
+    images.forEach((image) => {
+      $frag.appendChild(image.node);
+    });
+    $tinyImages.appendChild($frag);
+  };
+
+  const closeVisualizer = () => {
+    images = null;
+    imageIndex = null;
+    $visualizer.remove();
+    $visualizer = null;
+    $tinyImages = null;
+  };
+
+  const handleClick = (e) => {
+    if (state === LISTEN) {
+      if (e.target.tagName === "IMG") {
+        renderVisualizer(e.target);
+        state = OPEN;
+      }
+    } else if (state === OPEN) {
+      if (e.target.id === "close-visualizer-btn") {
+        closeVisualizer();
+        state = LISTEN;
+      }
+    } else {
+      throw new Error(`Estado "${state}" del visualizador invalido`);
     }
-  });
+  };
+
+  return { handleClick };
 };
 
 const imagesGallery = () => {
@@ -131,7 +179,14 @@ const imagesGallery = () => {
       parent = image.parentElement,
       sectName = parent.dataset.sect;
 
-    if (sectName) arr.push({ sectName, image });
+    if (sectName) {
+      image = image.cloneNode();
+      image.classList.add("visualizer__tiny-image");
+      arr.push({
+        sectName,
+        node: image,
+      });
+    }
   }
   return arr;
 };
