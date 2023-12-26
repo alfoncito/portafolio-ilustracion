@@ -48,7 +48,7 @@
               <img src="img/spoons.jpg" alt="Cucharas" />
               <img src="img/spoons.jpg" alt="Cucharas" />
               <img src="img/spoons.jpg" alt="Cucharas" />
-              <img class="cont-1-img-2" src="img/spoons.jpg" alt="Cucharas" />
+              <img class="cont-1-img-2" src="img/tetera.jpg" alt="Cucharas" />
             </div>
           </article>
           <article>
@@ -82,7 +82,9 @@
       <section class="visualizer full-screen">
         <div class="visualizer__header">
           <h3>Nombre sección</h3>
-          <button id="close-visualizer-btn">Cerrar</button>
+          <div id="visualizer-buttons-container">
+            <button id="close-visualizer-btn">Cerrar</button>
+          </div>
         </div>
         <div
           class="pos-relative flex-center"
@@ -90,6 +92,24 @@
         ></div>
         <div class="visualizer__tiny-images" id="tiny-images"></div>
       </section>
+    </template>
+    <template id="visualizer-buttons-template">
+      <div>
+        <button>Restablecer</button>
+        <div>
+          <img
+            src="icons/magnifying-glass-minus-solid.svg"
+            alt="Lupa para disminuir imagen"
+          />
+        </div>
+        <div>
+          <img
+            src="icons/magnifying-glass-plus-solid.svg"
+            alt="Lupa para agrandar imagen"
+          />
+        </div>
+        <div></div>
+      </div>
     </template>
   </body>
   <script src="script.js"></script>

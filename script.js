@@ -201,6 +201,8 @@ const btnScroll = () => {
 };
 
 const imageVisualizerCtrl = (app) => {
+  const MIN_X_SLIDE_TO_CHANGE = 150;
+
   let _images,
     _imageIndex = null,
     _$image = null,
@@ -209,7 +211,7 @@ const imageVisualizerCtrl = (app) => {
     _$tinyImages = null,
     _firstTouch = null,
     _prevTouch = null,
-    btns = nextBackImageBtns({
+    changeImageBtns = nextBackImageBtns({
       app,
       onNext() {
         nextImage();
@@ -217,7 +219,8 @@ const imageVisualizerCtrl = (app) => {
       onPrevius() {
         previusImage();
       },
-    });
+    }),
+    zoomBtns = optionsButton();
 
   const render = ($container, images, imageIndex) => {
     _$visualizer = document
@@ -225,23 +228,27 @@ const imageVisualizerCtrl = (app) => {
       .content.firstElementChild.cloneNode(true);
 
     $container.appendChild(_$visualizer);
-    app.onClick(handleClickClose);
-    app.onClick(handleClickTinyImage);
     _images = images;
     _imageIndex = imageIndex;
     _$tinyImages = document.getElementById("tiny-images");
     _$visualizerImageContainer = document.getElementById(
       "visualizer-image-container"
     );
-    app.onMediaChange(handleMediaChange);
-    handleMediaChange();
-    renderImage();
-    btns.render({ $container: _$visualizerImageContainer });
+    changeImageBtns.render({ $container: _$visualizerImageContainer });
+    zoomBtns.render({
+      $container: document.getElementById("visualizer-buttons-container"),
+    });
     renderTinyImages();
+    renderImage();
     configButtons();
+    handleMediaChange();
     _$visualizerImageContainer.addEventListener("touchmove", handleTouchMove);
     _$visualizerImageContainer.addEventListener("touchend", handleTouchEnd);
     _$visualizerImageContainer.addEventListener("touchstart", handleTouchStart);
+    app.onClick(handleClickClose);
+    app.onClick(handleClickTinyImage);
+    app.onMediaChange(handleMediaChange);
+    window.scroll(0, 0);
   };
 
   const renderImage = () => {
@@ -302,11 +309,14 @@ const imageVisualizerCtrl = (app) => {
   };
 
   const handleMediaChange = () => {
-    if (app.media.middle.matches) btns.showButtons();
-    else btns.hiddenButtons();
+    if (app.media.middle.matches) {
+      changeImageBtns.showButtons();
+      zoomBtns.showButtons();
+    } else {
+      changeImageBtns.hiddenButtons();
+      zoomBtns.hiddenButtons();
+    }
   };
-
-  const MIN_DESLICE_X_TO_CHANGE = 150;
 
   const handleTouchMove = (e) => {
     _prevTouch = e.touches[0];
@@ -320,14 +330,8 @@ const imageVisualizerCtrl = (app) => {
     if (_prevTouch && _firstTouch) {
       let desliceX = _prevTouch.pageX - _firstTouch.pageX;
 
-      console.log(desliceX);
-      if (desliceX >= MIN_DESLICE_X_TO_CHANGE) {
-        previusImage();
-        console.log("Imagen anterios");
-      } else if (desliceX <= -MIN_DESLICE_X_TO_CHANGE) {
-        nextImage();
-        console.log("Siguiente imagen");
-      }
+      if (desliceX >= MIN_X_SLIDE_TO_CHANGE) previusImage();
+      else if (desliceX <= -MIN_X_SLIDE_TO_CHANGE) nextImage();
     }
     _prevTouch = null;
     _firstTouch = null;
@@ -342,18 +346,18 @@ const imageVisualizerCtrl = (app) => {
   };
 
   const configButtons = () => {
-    if (_imageIndex >= _images.length - 1) btns.desableRight();
-    else btns.enableRight();
+    if (_imageIndex >= _images.length - 1) changeImageBtns.desableRight();
+    else changeImageBtns.enableRight();
 
-    if (_imageIndex <= 0) btns.desableLeft();
-    else btns.enableLeft();
+    if (_imageIndex <= 0) changeImageBtns.desableLeft();
+    else changeImageBtns.enableLeft();
   };
 
   return { render };
 };
 
 const imagesGallery = () => {
-  let arr = [],
+  let arrResult = [],
     images = document.images;
 
   for (let i = 0; i < images.length; i++) {
@@ -362,13 +366,13 @@ const imagesGallery = () => {
       sectName = parent.dataset.sect;
 
     if (sectName) {
-      arr.push({
+      arrResult.push({
         sectName,
         node: image,
       });
     }
   }
-  return arr;
+  return arrResult;
 };
 
 const buttonElement = ({ onClick, iconPath, classes }) => {
@@ -436,6 +440,32 @@ const nextBackImageBtns = ({ onNext, onPrevius }) => {
     desableLeft,
     enableRight,
     desableRight,
+    showButtons,
+    hiddenButtons,
+  };
+};
+
+const optionsButton = () => {
+  let _$elem = null;
+
+  const render = ({ $container }) => {
+    _$elem = document
+      .getElementById("visualizer-buttons-template")
+      .content.firstElementChild.cloneNode(true);
+
+    $container.prepend(_$elem);
+  };
+
+  const showButtons = () => {
+    _$elem.classList.remove("hidden");
+  };
+
+  const hiddenButtons = () => {
+    _$elem.classList.add("hidden");
+  };
+
+  return {
+    render,
     showButtons,
     hiddenButtons,
   };
