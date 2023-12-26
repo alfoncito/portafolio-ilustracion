@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main>
+    <main id="main"></main>
+    <template id="image-gallery-template">
       <header class="front-header flex-center">
         <div class="front-header__title">
           <h1 class="big-title">
@@ -76,14 +77,17 @@
           </article>
         </section>
       </section>
-    </main>
+    </template>
     <template id="visulizer-template">
       <section class="visualizer full-screen">
         <div class="visualizer__header">
           <h3>Nombre sección</h3>
           <button id="close-visualizer-btn">Cerrar</button>
         </div>
-        <div></div>
+        <div
+          class="pos-relative flex-center"
+          id="visualizer-image-container"
+        ></div>
         <div class="visualizer__tiny-images" id="tiny-images"></div>
       </section>
     </template>
