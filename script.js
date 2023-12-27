@@ -206,11 +206,14 @@ const imageVisualizerCtrl = (app) => {
   let _images,
     _imageIndex = null,
     _$image = null,
+    _zoom = 10,
     _$visualizer = null,
     _$visualizerImageContainer = null,
     _$tinyImages = null,
     _firstTouch = null,
     _prevTouch = null,
+    _allowMove = false,
+    _imageMoving = false,
     changeImageBtns = nextBackImageBtns({
       app,
       onNext() {
@@ -220,7 +223,18 @@ const imageVisualizerCtrl = (app) => {
         previusImage();
       },
     }),
-    zoomBtns = optionsButton();
+    zoomBtns = optionsButton({
+      app,
+      onMinusZoom() {
+        handleMinusZoom();
+      },
+      onPlusZoom() {
+        handlePlusZoom();
+      },
+      onRestore() {
+        handleRestore();
+      },
+    });
 
   const render = ($container, images, imageIndex) => {
     _$visualizer = document
@@ -248,6 +262,10 @@ const imageVisualizerCtrl = (app) => {
     app.onClick(handleClickClose);
     app.onClick(handleClickTinyImage);
     app.onMediaChange(handleMediaChange);
+    _$visualizerImageContainer.addEventListener("mousedown", handleMouseDown);
+    _$visualizerImageContainer.addEventListener("mousemove", handleMouseMove);
+    _$visualizerImageContainer.addEventListener("mouseup", handleMouseUp);
+    _$visualizerImageContainer.addEventListener("mouseleave", handlemouseLeave);
     window.scroll(0, 0);
   };
 
@@ -256,7 +274,12 @@ const imageVisualizerCtrl = (app) => {
     _$image = _images[_imageIndex].node.cloneNode();
     _$image.classList.value = "";
     _$image.classList.add("visualizer__image");
+    _$image.draggable = false;
     _$visualizerImageContainer.appendChild(_$image);
+
+    _zoom = 10;
+    zoomBtns.enableMinusBtn();
+    zoomBtns.enablePlusBtn();
   };
 
   const removeImage = () => {
@@ -335,6 +358,89 @@ const imageVisualizerCtrl = (app) => {
     }
     _prevTouch = null;
     _firstTouch = null;
+  };
+
+  const handleMinusZoom = () => {
+    if (_zoom <= 1) return null;
+
+    _zoom -= 1;
+    _$image.style.transform = `scale(${
+      _zoom / 10
+    }) translate(${imageX}px,${imageY}px)`;
+    zoomBtns.enablePlusBtn();
+    if (_zoom <= 1) zoomBtns.desableMinusBtn();
+    _allowMove = _zoom > 10;
+  };
+
+  const handlePlusZoom = () => {
+    if (_zoom >= 20) return null;
+
+    _zoom += 1;
+    _$image.style.transform = `scale(${
+      _zoom / 10
+    }) translate(${imageX}px,${imageY}px)`;
+    zoomBtns.enableMinusBtn();
+    if (_zoom >= 20) zoomBtns.desablePlusBtn();
+    _allowMove = _zoom > 10;
+  };
+
+  const handleRestore = () => {
+    _zoom = 10;
+    imageX = 0;
+    imageY = 0;
+    _$image.style.transform = `scale(${
+      _zoom / 10
+    }) translate(${imageX}px,${imageY}px)`;
+    zoomBtns.enableMinusBtn();
+    zoomBtns.enablePlusBtn();
+  };
+
+  let imageX = 0,
+    imageY = 0;
+
+  const handleMouseDown = (e) => {
+    if (_allowMove) {
+      console.log("Mouse down");
+      _imageMoving = true;
+      initPos = {
+        x: e.x,
+        y: e.y,
+      };
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (_allowMove && _imageMoving) {
+      let imgBound = _$image.getBoundingClientRect();
+
+      console.log(`X: ${imgBound.x} | width/2: ${imgBound.width / 2}`);
+      if (
+        (e.movementX > 0 && imgBound.x < imgBound.width / 2) ||
+        (e.movementX < 0 && imgBound.x + imgBound.width / 2 > 0)
+      )
+        imageX += (e.movementX * 10) / _zoom;
+
+      if (
+        (e.movementY > 0 && imgBound.y < imgBound.height / 2) ||
+        (e.movementY < 0 && imgBound.y + imgBound.height / 2 > 0)
+      )
+        imageY += (e.movementY * 10) / _zoom;
+
+      _$image.style.transform = `scale(${
+        _zoom / 10
+      }) translate(${imageX}px,${imageY}px)`;
+    }
+  };
+
+  const handleMouseUp = (e) => {
+    console.log("Mouse up");
+    _imageMoving = false;
+    initPos = null;
+    imageBound = null;
+  };
+
+  const handlemouseLeave = () => {
+    _imageMoving = false;
   };
 
   const closeVisualizer = () => {
@@ -445,29 +551,64 @@ const nextBackImageBtns = ({ onNext, onPrevius }) => {
   };
 };
 
-const optionsButton = () => {
-  let _$elem = null;
+const optionsButton = ({ app, onPlusZoom, onMinusZoom, onRestore }) => {
+  let _$buttons = null,
+    _$btnPlusZoom = null,
+    _$btnMinusZoom = null,
+    _$btnRestore = null;
 
   const render = ({ $container }) => {
-    _$elem = document
+    _$buttons = document
       .getElementById("visualizer-buttons-template")
       .content.firstElementChild.cloneNode(true);
 
-    $container.prepend(_$elem);
+    $container.prepend(_$buttons);
+    _$btnMinusZoom = document.getElementById("btn-minus-zoom");
+    _$btnPlusZoom = document.getElementById("btn-plus-zoom");
+    _$btnRestore = document.getElementById("btn-restore");
+    app.onClick(handleClick);
+  };
+
+  const handleClick = (e) => {
+    let target = e.target;
+
+    if (target === _$btnRestore) onRestore(e);
+    else if (target === _$btnMinusZoom) onMinusZoom(e);
+    else if (target === _$btnPlusZoom) onPlusZoom(e);
   };
 
   const showButtons = () => {
-    _$elem.classList.remove("hidden");
+    _$buttons.classList.remove("hidden");
   };
 
   const hiddenButtons = () => {
-    _$elem.classList.add("hidden");
+    _$buttons.classList.add("hidden");
+  };
+
+  const enablePlusBtn = () => {
+    _$btnPlusZoom.classList.remove("desable");
+  };
+
+  const desablePlusBtn = () => {
+    _$btnPlusZoom.classList.add("desable");
+  };
+
+  const enableMinusBtn = () => {
+    _$btnMinusZoom.classList.remove("desable");
+  };
+
+  const desableMinusBtn = () => {
+    _$btnMinusZoom.classList.add("desable");
   };
 
   return {
     render,
     showButtons,
     hiddenButtons,
+    enableMinusBtn,
+    enablePlusBtn,
+    desableMinusBtn,
+    desablePlusBtn,
   };
 };
 

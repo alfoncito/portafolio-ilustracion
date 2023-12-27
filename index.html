@@ -87,7 +87,7 @@
           </div>
         </div>
         <div
-          class="pos-relative flex-center"
+          class="overflow-hidden pos-relative flex-center"
           id="visualizer-image-container"
         ></div>
         <div class="visualizer__tiny-images" id="tiny-images"></div>
@@ -95,15 +95,17 @@
     </template>
     <template id="visualizer-buttons-template">
       <div>
-        <button>Restablecer</button>
+        <button id="btn-restore">Restablecer</button>
         <div>
           <img
+            id="btn-minus-zoom"
             src="icons/magnifying-glass-minus-solid.svg"
             alt="Lupa para disminuir imagen"
           />
         </div>
         <div>
           <img
+            id="btn-plus-zoom"
             src="icons/magnifying-glass-plus-solid.svg"
             alt="Lupa para agrandar imagen"
           />

@@ -175,6 +175,7 @@ img {
 .visualizer__btn-next,
 .visualizer__btn-previus {
   position: absolute;
+  z-index: 20;
   top: 50%;
   transform: translateY(-50%);
 }
@@ -265,6 +266,10 @@ img {
 
 .hidden {
   display: none;
+}
+
+.overflow-hidden {
+  overflow: hidden;
 }
 
 @media (min-width: 480px) {
