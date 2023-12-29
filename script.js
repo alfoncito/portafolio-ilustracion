@@ -234,6 +234,20 @@ const imageVisualizerCtrl = (app) => {
       onRestore() {
         handleRestore();
       },
+    }),
+    $btnMobileZoomPlus = buttonElement({
+      onClick() {
+        console.log("Click en el boton plus");
+      },
+      iconPath: "icons/magnifying-glass-plus-solid.svg",
+      classes: ["mb-btn-zoom-plus"],
+    }),
+    $btnMobileZoomMinus = buttonElement({
+      onClick() {
+        console.log("Click en el boton minus");
+      },
+      iconPath: "icons/magnifying-glass-minus-solid.svg",
+      classes: ["mb-btn-zoom-minus"],
     });
 
   const render = ($container, images, imageIndex) => {
@@ -242,6 +256,8 @@ const imageVisualizerCtrl = (app) => {
       .content.firstElementChild.cloneNode(true);
 
     $container.appendChild(_$visualizer);
+    $container.appendChild($btnMobileZoomMinus);
+    $container.appendChild($btnMobileZoomPlus);
     _images = images;
     _imageIndex = imageIndex;
     _$tinyImages = document.getElementById("tiny-images");
@@ -335,9 +351,15 @@ const imageVisualizerCtrl = (app) => {
     if (app.media.middle.matches) {
       changeImageBtns.showButtons();
       zoomBtns.showButtons();
+
+      $btnMobileZoomMinus.classList.add("hidden");
+      $btnMobileZoomPlus.classList.add("hidden");
     } else {
       changeImageBtns.hiddenButtons();
       zoomBtns.hiddenButtons();
+
+      $btnMobileZoomMinus.classList.remove("hidden");
+      $btnMobileZoomPlus.classList.remove("hidden");
     }
   };
 
@@ -345,8 +367,17 @@ const imageVisualizerCtrl = (app) => {
     _prevTouch = e.touches[0];
   };
 
+  let touchTimestamp = Date.now();
+
   const handleTouchStart = (e) => {
+    let now = Date.now();
+
     _firstTouch = e.touches[0];
+
+    if (now - touchTimestamp <= 500) {
+      console.log("Doble tab");
+    }
+    touchTimestamp = Date.now();
   };
 
   const handleTouchEnd = () => {
@@ -364,6 +395,10 @@ const imageVisualizerCtrl = (app) => {
     if (_zoom <= 1) return null;
 
     _zoom -= 1;
+    if (_zoom <= 10) {
+      imageX = 0;
+      imageY = 0;
+    }
     _$image.style.transform = `scale(${
       _zoom / 10
     }) translate(${imageX}px,${imageY}px)`;
@@ -400,7 +435,6 @@ const imageVisualizerCtrl = (app) => {
 
   const handleMouseDown = (e) => {
     if (_allowMove) {
-      console.log("Mouse down");
       _imageMoving = true;
       initPos = {
         x: e.x,
@@ -413,7 +447,6 @@ const imageVisualizerCtrl = (app) => {
     if (_allowMove && _imageMoving) {
       let imgBound = _$image.getBoundingClientRect();
 
-      console.log(`X: ${imgBound.x} | width/2: ${imgBound.width / 2}`);
       if (
         (e.movementX > 0 && imgBound.x < imgBound.width / 2) ||
         (e.movementX < 0 && imgBound.x + imgBound.width / 2 > 0)
@@ -548,6 +581,70 @@ const nextBackImageBtns = ({ onNext, onPrevius }) => {
     desableRight,
     showButtons,
     hiddenButtons,
+  };
+};
+
+const createImageCtrl = () => {
+  const MAX_ZOOM = 19,
+    MIN_ZOOM = 1,
+    INTERVAL_ZOOM = 1;
+
+  return {
+    _$image: null,
+    _zoom: 10,
+    _offsetX: 0,
+    _offsetY: 0,
+    setImage($image) {
+      this._$image = $image;
+    },
+    isMaxZoom() {
+      return this._zoom === MAX_ZOOM;
+    },
+    isMinZoom() {
+      return this._zoom === MIN_ZOOM;
+    },
+    plusZoom() {
+      this._zoom = Math.min(this._zoom + INTERVAL_ZOOM, MAX_ZOOM);
+      this._transformImage();
+    },
+    minusZoom() {
+      this._zoom = Math.max(this._zoom - INTERVAL_ZOOM, MIN_ZOOM);
+      if (this._zoom <= 10) {
+        this._offsetX = 0;
+        this._offsetY = 0;
+      }
+      this._transformImage();
+    },
+    offset(x, y) {
+      if (this._zoom >= 10) {
+        let imgBound = this._$image.getBoundingClientRect();
+
+        if (
+          (x > 0 && imgBound.x < imgBound.width / 2) ||
+          (x < 0 && imgBound.x + imgBound.width / 2 > 0)
+        )
+          this._offsetX += (x * 10) / this._zoom;
+
+        if (
+          (y > 0 && imgBound.y < imgBound.height / 2) ||
+          (y < 0 && imgBound.y + imgBound.height / 2 > 0)
+        )
+          this._offsetY += (y * 10) / _zoom;
+
+        this._transformImage();
+      }
+    },
+    reset() {
+      this._zoom = 10;
+      this._offsetX = 0;
+      this._offsetY = 0;
+      this._transformImage();
+    },
+    _transformImage() {
+      this._$image.style.transform = `scale(${this._zoom / 10}) translate(${
+        this._offsetX
+      }px,${this._offsetY}px)`;
+    },
   };
 };
 
