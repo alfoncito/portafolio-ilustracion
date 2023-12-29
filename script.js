@@ -205,14 +205,13 @@ const imageVisualizerCtrl = (app) => {
 
   let _images,
     _imageIndex = null,
-    _$image = null,
-    _zoom = 10,
+    _imageCtrl = createImageCtrl(),
     _$visualizer = null,
     _$visualizerImageContainer = null,
     _$tinyImages = null,
     _firstTouch = null,
     _prevTouch = null,
-    _allowMove = false,
+    _touchTimestamp = Date.now(),
     _imageMoving = false,
     changeImageBtns = nextBackImageBtns({
       app,
@@ -237,14 +236,19 @@ const imageVisualizerCtrl = (app) => {
     }),
     $btnMobileZoomPlus = buttonElement({
       onClick() {
-        console.log("Click en el boton plus");
+        _imageCtrl.plusZoom();
+        if (_imageCtrl.isMaxZoom()) $btnMobileZoomPlus.classList.add("desable");
+        $btnMobileZoomMinus.classList.remove("desable");
       },
       iconPath: "icons/magnifying-glass-plus-solid.svg",
       classes: ["mb-btn-zoom-plus"],
     }),
     $btnMobileZoomMinus = buttonElement({
       onClick() {
-        console.log("Click en el boton minus");
+        _imageCtrl.minusZoom();
+        if (_imageCtrl.isMinZoom())
+          $btnMobileZoomMinus.classList.add("desable");
+        $btnMobileZoomPlus.classList.remove("desable");
       },
       iconPath: "icons/magnifying-glass-minus-solid.svg",
       classes: ["mb-btn-zoom-minus"],
@@ -286,23 +290,12 @@ const imageVisualizerCtrl = (app) => {
   };
 
   const renderImage = () => {
-    removeImage();
-    _$image = _images[_imageIndex].node.cloneNode();
-    _$image.classList.value = "";
-    _$image.classList.add("visualizer__image");
-    _$image.draggable = false;
-    _$visualizerImageContainer.appendChild(_$image);
+    _imageCtrl.removeImage();
+    _imageCtrl.setImage(_images[_imageIndex].node.cloneNode());
+    _imageCtrl.insertImage(_$visualizerImageContainer);
 
-    _zoom = 10;
     zoomBtns.enableMinusBtn();
     zoomBtns.enablePlusBtn();
-  };
-
-  const removeImage = () => {
-    if (_$image) {
-      _$image.remove();
-      _$image = null;
-    }
   };
 
   const renderTinyImages = () => {
@@ -363,117 +356,85 @@ const imageVisualizerCtrl = (app) => {
     }
   };
 
-  const handleTouchMove = (e) => {
-    _prevTouch = e.touches[0];
-  };
-
-  let touchTimestamp = Date.now();
-
   const handleTouchStart = (e) => {
     let now = Date.now();
 
     _firstTouch = e.touches[0];
 
-    if (now - touchTimestamp <= 500) {
-      console.log("Doble tab");
+    if (now - _touchTimestamp <= 500) _imageCtrl.reset();
+    _touchTimestamp = Date.now();
+  };
+
+  const handleTouchMove = (e) => {
+    let currentTouch = e.touches[0];
+
+    if (_prevTouch) {
+      let slideX = currentTouch.pageX - _prevTouch.pageX,
+        slideY = currentTouch.pageY - _prevTouch.pageY;
+
+      _imageCtrl.offset(slideX, slideY);
     }
-    touchTimestamp = Date.now();
+    _prevTouch = currentTouch;
+    e.preventDefault();
   };
 
   const handleTouchEnd = () => {
     if (_prevTouch && _firstTouch) {
-      let desliceX = _prevTouch.pageX - _firstTouch.pageX;
+      let sc = _imageCtrl.sidesConstraint(),
+        slideX = _prevTouch.pageX - _firstTouch.pageX;
 
-      if (desliceX >= MIN_X_SLIDE_TO_CHANGE) previusImage();
-      else if (desliceX <= -MIN_X_SLIDE_TO_CHANGE) nextImage();
+      if (sc.left && slideX >= MIN_X_SLIDE_TO_CHANGE) previusImage();
+      else if (sc.right && slideX <= -MIN_X_SLIDE_TO_CHANGE) nextImage();
     }
     _prevTouch = null;
     _firstTouch = null;
   };
 
   const handleMinusZoom = () => {
-    if (_zoom <= 1) return null;
-
-    _zoom -= 1;
-    if (_zoom <= 10) {
-      imageX = 0;
-      imageY = 0;
-    }
-    _$image.style.transform = `scale(${
-      _zoom / 10
-    }) translate(${imageX}px,${imageY}px)`;
+    _imageCtrl.minusZoom();
+    if (_imageCtrl.isMinZoom()) zoomBtns.desableMinusBtn();
+    if (!_imageCtrl.isMoveable)
+      _$visualizerImageContainer.classList.remove(
+        "visualizer__image--allow-move"
+      );
     zoomBtns.enablePlusBtn();
-    if (_zoom <= 1) zoomBtns.desableMinusBtn();
-    _allowMove = _zoom > 10;
   };
 
   const handlePlusZoom = () => {
-    if (_zoom >= 20) return null;
-
-    _zoom += 1;
-    _$image.style.transform = `scale(${
-      _zoom / 10
-    }) translate(${imageX}px,${imageY}px)`;
+    _imageCtrl.plusZoom();
+    if (_imageCtrl.isMaxZoom()) zoomBtns.desablePlusBtn();
+    if (_imageCtrl.isMoveable)
+      _$visualizerImageContainer.classList.add("visualizer__image--allow-move");
     zoomBtns.enableMinusBtn();
-    if (_zoom >= 20) zoomBtns.desablePlusBtn();
-    _allowMove = _zoom > 10;
   };
 
   const handleRestore = () => {
-    _zoom = 10;
-    imageX = 0;
-    imageY = 0;
-    _$image.style.transform = `scale(${
-      _zoom / 10
-    }) translate(${imageX}px,${imageY}px)`;
+    _imageCtrl.reset();
+    _$visualizerImageContainer.classList.remove(
+      "visualizer__image--allow-move"
+    );
     zoomBtns.enableMinusBtn();
     zoomBtns.enablePlusBtn();
   };
 
-  let imageX = 0,
-    imageY = 0;
-
   const handleMouseDown = (e) => {
-    if (_allowMove) {
-      _imageMoving = true;
-      initPos = {
-        x: e.x,
-        y: e.y,
-      };
-    }
+    _imageMoving = true;
+    if (_imageCtrl.isMoveable)
+      _$visualizerImageContainer.classList.add("visualizer__image--moving");
   };
 
   const handleMouseMove = (e) => {
-    if (_allowMove && _imageMoving) {
-      let imgBound = _$image.getBoundingClientRect();
-
-      if (
-        (e.movementX > 0 && imgBound.x < imgBound.width / 2) ||
-        (e.movementX < 0 && imgBound.x + imgBound.width / 2 > 0)
-      )
-        imageX += (e.movementX * 10) / _zoom;
-
-      if (
-        (e.movementY > 0 && imgBound.y < imgBound.height / 2) ||
-        (e.movementY < 0 && imgBound.y + imgBound.height / 2 > 0)
-      )
-        imageY += (e.movementY * 10) / _zoom;
-
-      _$image.style.transform = `scale(${
-        _zoom / 10
-      }) translate(${imageX}px,${imageY}px)`;
-    }
+    if (_imageMoving) _imageCtrl.offset(e.movementX, e.movementY);
   };
 
   const handleMouseUp = (e) => {
-    console.log("Mouse up");
     _imageMoving = false;
-    initPos = null;
-    imageBound = null;
+    _$visualizerImageContainer.classList.remove("visualizer__image--moving");
   };
 
   const handlemouseLeave = () => {
     _imageMoving = false;
+    _$visualizerImageContainer.classList.remove("visualizer__image--moving");
   };
 
   const closeVisualizer = () => {
@@ -505,6 +466,7 @@ const imagesGallery = () => {
       sectName = parent.dataset.sect;
 
     if (sectName) {
+      image.classList.value = "";
       arrResult.push({
         sectName,
         node: image,
@@ -594,8 +556,24 @@ const createImageCtrl = () => {
     _zoom: 10,
     _offsetX: 0,
     _offsetY: 0,
+    get isMoveable() {
+      return this._zoom > 10;
+    },
     setImage($image) {
       this._$image = $image;
+      this._$image.classList.value = "";
+      this._$image.classList.add("visualizer__image");
+      this._$image.draggable = false;
+      this.reset();
+    },
+    insertImage($container) {
+      $container.appendChild(this._$image);
+    },
+    removeImage() {
+      if (this._$image) {
+        this._$image.remove();
+        this._$image = null;
+      }
     },
     isMaxZoom() {
       return this._zoom === MAX_ZOOM;
@@ -616,22 +594,33 @@ const createImageCtrl = () => {
       this._transformImage();
     },
     offset(x, y) {
-      if (this._zoom >= 10) {
+      let sc = this.sidesConstraint();
+
+      if ((x > 0 && !sc.right) || (x < 0 && !sc.left))
+        this._offsetX += (x * 10) / this._zoom;
+
+      if ((y > 0 && !sc.top) || (y < 0 && !sc.bottom))
+        this._offsetY += (y * 10) / this._zoom;
+
+      this._transformImage();
+    },
+    sidesConstraint() {
+      if (this.isMoveable) {
         let imgBound = this._$image.getBoundingClientRect();
 
-        if (
-          (x > 0 && imgBound.x < imgBound.width / 2) ||
-          (x < 0 && imgBound.x + imgBound.width / 2 > 0)
-        )
-          this._offsetX += (x * 10) / this._zoom;
-
-        if (
-          (y > 0 && imgBound.y < imgBound.height / 2) ||
-          (y < 0 && imgBound.y + imgBound.height / 2 > 0)
-        )
-          this._offsetY += (y * 10) / _zoom;
-
-        this._transformImage();
+        return {
+          top: imgBound.y > imgBound.height / 2,
+          bottom: imgBound.y + imgBound.height / 2 < 0,
+          right: imgBound.x > imgBound.width / 2,
+          left: imgBound.x + imgBound.width / 2 < 0,
+        };
+      } else {
+        return {
+          top: true,
+          bottom: true,
+          right: true,
+          left: true,
+        };
       }
     },
     reset() {
