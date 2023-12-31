@@ -28,14 +28,20 @@
       <section class="main-grid">
         <nav class="nav-menu" id="nav-menu">
           <ul class="nav-menu__ul">
-            <li><a href="#section-1">Sección 1</a></li>
-            <li><a href="#section-2">Sección 2</a></li>
-            <li><a href="#section-3">Sección 3</a></li>
+            <li>
+              <a href="#section-1" class="link js-menu-link">Sección 1</a>
+            </li>
+            <li>
+              <a href="#section-2" class="link js-menu-link">Sección 2</a>
+            </li>
+            <li>
+              <a href="#section-3" class="link js-menu-link">Sección 3</a>
+            </li>
           </ul>
         </nav>
         <section>
           <article>
-            <header class="sect-title sect-title--1">
+            <header class="sect-title sect-title--1 js-section-title">
               <div class="sect-title__div flex-center">
                 <h2 class="title" id="section-1">Sección 1</h2>
               </div>
@@ -44,35 +50,43 @@
               class="images-container l-content js-img-container"
               data-sect="section-1"
             >
-              <img class="cont-1-img-1" src="img/spoons.jpg" alt="Cucharas" />
-              <img src="img/spoons.jpg" alt="Cucharas" />
-              <img src="img/spoons.jpg" alt="Cucharas" />
-              <img src="img/spoons.jpg" alt="Cucharas" />
-              <img class="cont-1-img-2" src="img/tetera.jpg" alt="Cucharas" />
+              <img
+                class="image lg-col-2 lg-row-2 js-img"
+                src="img/spoons.jpg"
+                alt="Cucharas"
+              />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
+              <img
+                class="image lg-col-2 lg-row-2 js-img"
+                src="img/tetera.jpg"
+                alt="Cucharas"
+              />
             </div>
           </article>
           <article>
-            <header>
+            <header class="js-section-title">
               <div>
                 <h2 id="section-2">Sección 2</h2>
               </div>
             </header>
             <div class="js-img-container" data-sect="section-2">
-              <img src="img/spoons.jpg" alt="Cucharas" />
-              <img src="img/spoons.jpg" alt="Cucharas" />
-              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
             </div>
           </article>
           <article>
-            <header>
+            <header class="js-section-title">
               <div>
                 <h2 id="section-3">Sección 3</h2>
               </div>
             </header>
             <div class="js-img-container" data-sect="section-3">
-              <img src="img/spoons.jpg" alt="Cucharas" />
-              <img src="img/spoons.jpg" alt="Cucharas" />
-              <img src="img/spoons.jpg" alt="Cucharas" />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
+              <img class="image js-img" src="img/spoons.jpg" alt="Cucharas" />
             </div>
           </article>
         </section>
@@ -81,7 +95,7 @@
     <template id="visulizer-template">
       <section class="visualizer full-screen">
         <div class="visualizer__header">
-          <h3>Nombre sección</h3>
+          <h3 id="visualizer-title">Nombre sección</h3>
           <div id="visualizer-buttons-container">
             <button id="close-visualizer-btn">Cerrar</button>
           </div>

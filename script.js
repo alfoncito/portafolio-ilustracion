@@ -3,18 +3,15 @@ const main = () => {
 };
 
 const app = () => {
-  let app = {
-      media: appMedia(),
+  let media = appMedia(),
+    app = {
+      media,
+      observer: createObserver(media),
     },
     imageGallery = imageGalleryCtrl(app),
     visualizer = imageVisualizerCtrl(app),
     $container = document.getElementById("main"),
-    currentView = "gallery",
-    listenerFunts = {
-      click: [],
-      media: [],
-      view: [],
-    };
+    currentView = "gallery";
 
   const router = (...params) => {
     $container.innerHTML = "";
@@ -31,45 +28,16 @@ const app = () => {
   const exeNegociator = (obj) => {
     try {
       obj[currentView]();
-    } catch {}
-  };
-
-  app.onClick = (funct) => {
-    document.addEventListener("click", funct);
-    listenerFunts.click.push(funct);
-  };
-
-  app.offClick = (funct) => {
-    document.removeEventListener("click", funct);
-    listenerFunts.click = listenerFunts.click.filter((f) => f !== funct);
-  };
-
-  app.onMediaChange = (funct) => {
-    app.media.large.addEventListener("change", funct);
-    app.media.middle.addEventListener("change", funct);
-    listenerFunts.media.push(funct);
-  };
-
-  app.offMediaChange = (funct) => {
-    listenerFunts.media.forEach((f) => {
-      app.media.large.removeEventListener("change", funct);
-      app.media.middle.removeEventListener("change", funct);
-    });
-    listenerFunts.media = listenerFunts.media.filter((f) => f !== funct);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   app.changeView = (view, ...params) => {
     currentView = view;
 
-    listenerFunts.click.forEach((funct) =>
-      document.removeEventListener("click", funct)
-    );
-    listenerFunts.click.length = 0;
-    listenerFunts.media.forEach((funct) => {
-      app.media.large.removeEventListener("change", funct);
-      app.media.middle.removeEventListener("change", funct);
-    });
-    listenerFunts.media.length = 0;
+    app.observer.triggerViewChange();
+    app.observer.clear();
     router(...params);
   };
 
@@ -78,7 +46,10 @@ const app = () => {
 
 const imageGalleryCtrl = (app) => {
   let menu = menuCtrl(app),
-    currentClass = "";
+    scrollTop = null,
+    sectTitlesObserver = null,
+    imagesObserver = null,
+    navLinks = null;
 
   const render = ($container) => {
     let $gallery = document
@@ -86,11 +57,13 @@ const imageGalleryCtrl = (app) => {
       .content.cloneNode(true);
 
     $container.appendChild($gallery);
-    adjustGrid();
+    adjustScroll();
     menu.init();
-    btnScroll();
-    app.onMediaChange(adjustGrid);
-    app.onClick(handleClick);
+    btnScroll(app);
+    app.observer.onClick(handleClick);
+    app.observer.onViewChange(handleViewChange);
+    observeSectTitle();
+    observeImages();
   };
 
   const handleClick = (e) => {
@@ -104,37 +77,124 @@ const imageGalleryCtrl = (app) => {
     }
   };
 
-  const adjustGrid = () => {
-    let $containers = document.querySelectorAll(".js-img-container"),
-      nextClass = "";
+  const handleViewChange = () => {
+    scrollTop = window.scrollY;
+    sectTitlesObserver.disconnect();
+    imagesObserver.disconnect();
+  };
 
-    if (app.media.large.matches) nextClass = "grid-3";
-    else if (app.media.middle.matches) nextClass = "grid-2";
-    else nextClass = "grid-1";
+  const adjustScroll = () => {
+    if (scrollTop) {
+      setTimeout(() => {
+        window.scroll(0, scrollTop);
+      }, 200);
+    }
+  };
 
-    $containers.forEach(($container) => {
-      if (currentClass !== "") $container.classList.remove(currentClass);
-      $container.classList.add(nextClass);
+  const observeSectTitle = () => {
+    let sectsTitles = document.querySelectorAll(".js-section-title");
+
+    navLinks = createNavLinks();
+    sectTitlesObserver = new IntersectionObserver(handleSectImageObserve, {
+      root: null,
+      threshold: 1,
+      rootMargin: "0px 0px -60% 0px",
     });
-    currentClass = nextClass;
+    sectsTitles.forEach((sectTitle) => sectTitlesObserver.observe(sectTitle));
+  };
+
+  const createNavLinks = () => {
+    let links = document.querySelectorAll(".js-menu-link"),
+      sectsTitles = document.querySelectorAll(".js-section-title"),
+      navLinks = [];
+
+    for (let i = 0; i < links.length; i++) {
+      navLinks[i] = {
+        link: links[i],
+        sectTitle: sectsTitles[i],
+      };
+    }
+    return navLinks;
+  };
+
+  const handleSectImageObserve = (entries) => {
+    let instersectingSomething = false;
+
+    blurAllLinks();
+    entries.forEach((entrie) => {
+      if (entrie.isIntersecting) {
+        focusLink(entrie.target);
+        instersectingSomething = true;
+      }
+    });
+
+    if (!instersectingSomething) {
+      let maxTop = -Infinity,
+        navLinkIndex = null;
+
+      navLinks.forEach((navLink, index) => {
+        let stb = navLink.sectTitle.getBoundingClientRect();
+
+        if (stb.top <= 0 && stb.top > maxTop) {
+          maxTop = stb.top;
+          navLinkIndex = index;
+        }
+      });
+
+      if (navLinkIndex !== null) focusLink(navLinks[navLinkIndex].sectTitle);
+    }
+  };
+
+  const focusLink = ($sectTitle) => {
+    let sectTitleIndex = navLinks.findIndex(
+      (nl) => nl.sectTitle === $sectTitle
+    );
+
+    navLinks[sectTitleIndex].link.classList.add("link--selected");
+  };
+
+  const blurAllLinks = () => {
+    navLinks.forEach((nl) => nl.link.classList.remove("link--selected"));
+  };
+
+  const observeImages = () => {
+    let images = document.querySelectorAll(".js-img");
+
+    imagesObserver = new IntersectionObserver(handleImageObserve, {
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.5,
+    });
+
+    images.forEach(($img) => {
+      imagesObserver.observe($img);
+    });
+  };
+
+  const handleImageObserve = (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) entry.target.classList.add("slice-fade-in");
+    });
   };
 
   return { render };
 };
 
 const menuCtrl = (app) => {
-  let $menu = null,
+  let $btnMenu = null,
+    $navMenu = null,
     $btnClose = null;
 
   const init = () => {
-    $menu = document.getElementById("nav-menu");
+    $navMenu = document.getElementById("nav-menu");
+    $btnMenu = document.getElementById("btn-menu");
     handleMedia();
-    app.onMediaChange(handleMedia);
+    app.observer.onMediaChange(handleMedia);
   };
 
-  const showMenu = () => $menu.classList.add("nav-menu--show");
+  const showMenu = () => $navMenu.classList.add("nav-menu--show");
 
-  const hiddeMenu = () => $menu.classList.remove("nav-menu--show");
+  const hiddeMenu = () => $navMenu.classList.remove("nav-menu--show");
 
   const handleClick = (e) => {
     if (e.target.matches("#btn-menu") || e.target.matches("#btn-menu *")) {
@@ -148,32 +208,34 @@ const menuCtrl = (app) => {
   };
 
   const mobile = () => {
-    $menu.classList.remove("nav-menu--desktop");
-    $menu.classList.add("nav-menu--mobile");
-    $menu.classList.add("flex-center");
+    $navMenu.classList.remove("nav-menu--desktop");
+    $navMenu.classList.add("nav-menu--mobile");
+    $navMenu.classList.add("flex-center");
     $btnClose = buttonElement({
       onClick: hiddeMenu,
       iconPath: "icons/xmark-solid.svg",
       classes: ["btn-close"],
     });
-    $menu.appendChild($btnClose);
+    $navMenu.appendChild($btnClose);
+    $btnMenu.classList.remove("hidden");
   };
 
   const desktop = () => {
-    $menu.classList.remove("nav-menu--mobile");
-    $menu.classList.add("nav-menu--desktop");
-    $menu.classList.remove("nav-menu--show");
-    $menu.classList.remove("flex-center");
+    $navMenu.classList.remove("nav-menu--mobile");
+    $navMenu.classList.add("nav-menu--desktop");
+    $navMenu.classList.remove("nav-menu--show");
+    $navMenu.classList.remove("flex-center");
     $btnClose?.remove();
     $btnClose = null;
+    $btnMenu.classList.add("hidden");
   };
 
   const handleMedia = () => {
     if (app.media.large.matches) {
-      app.offClick(handleClick);
+      app.observer.offClick(handleClick);
       desktop();
     } else {
-      app.onClick(handleClick);
+      app.observer.onClick(handleClick);
       mobile();
     }
   };
@@ -181,7 +243,7 @@ const menuCtrl = (app) => {
   return { init };
 };
 
-const btnScroll = () => {
+const btnScroll = (app) => {
   const SCROLL_TOP = 1000;
 
   let $btn = document.getElementById("btn-scroll-top");
@@ -195,9 +257,9 @@ const btnScroll = () => {
     window.scroll(0, 0);
   };
 
-  window.addEventListener("scroll", handleScroll);
-  $btn.addEventListener("click", handleClick);
   handleScroll();
+  app.observer.onScroll(handleScroll);
+  $btn.addEventListener("click", handleClick);
 };
 
 const imageVisualizerCtrl = (app) => {
@@ -206,6 +268,7 @@ const imageVisualizerCtrl = (app) => {
   let _images,
     _imageIndex = null,
     _imageCtrl = createImageCtrl(),
+    _$title = null,
     _$visualizer = null,
     _$visualizerImageContainer = null,
     _$tinyImages = null,
@@ -214,7 +277,6 @@ const imageVisualizerCtrl = (app) => {
     _touchTimestamp = Date.now(),
     _imageMoving = false,
     changeImageBtns = nextBackImageBtns({
-      app,
       onNext() {
         nextImage();
       },
@@ -268,6 +330,7 @@ const imageVisualizerCtrl = (app) => {
     _$visualizerImageContainer = document.getElementById(
       "visualizer-image-container"
     );
+    _$title = document.getElementById("visualizer-title");
     changeImageBtns.render({ $container: _$visualizerImageContainer });
     zoomBtns.render({
       $container: document.getElementById("visualizer-buttons-container"),
@@ -279,9 +342,9 @@ const imageVisualizerCtrl = (app) => {
     _$visualizerImageContainer.addEventListener("touchmove", handleTouchMove);
     _$visualizerImageContainer.addEventListener("touchend", handleTouchEnd);
     _$visualizerImageContainer.addEventListener("touchstart", handleTouchStart);
-    app.onClick(handleClickClose);
-    app.onClick(handleClickTinyImage);
-    app.onMediaChange(handleMediaChange);
+    app.observer.onClick(handleClickClose);
+    app.observer.onClick(handleClickTinyImage);
+    app.observer.onMediaChange(handleMediaChange);
     _$visualizerImageContainer.addEventListener("mousedown", handleMouseDown);
     _$visualizerImageContainer.addEventListener("mousemove", handleMouseMove);
     _$visualizerImageContainer.addEventListener("mouseup", handleMouseUp);
@@ -296,6 +359,8 @@ const imageVisualizerCtrl = (app) => {
 
     zoomBtns.enableMinusBtn();
     zoomBtns.enablePlusBtn();
+    _$title.textContent = _images[_imageIndex].sectName;
+    adjustTinyImage();
   };
 
   const renderTinyImages = () => {
@@ -310,22 +375,6 @@ const imageVisualizerCtrl = (app) => {
 
   const handleClickClose = (e) => {
     if (e.target.id === "close-visualizer-btn") closeVisualizer();
-  };
-
-  const nextImage = () => {
-    if (_imageIndex < _images.length - 1) {
-      _imageIndex++;
-      renderImage();
-      configButtons();
-    }
-  };
-
-  const previusImage = () => {
-    if (_imageIndex > 0) {
-      _imageIndex--;
-      renderImage();
-      configButtons();
-    }
   };
 
   const handleClickTinyImage = (e) => {
@@ -435,6 +484,41 @@ const imageVisualizerCtrl = (app) => {
   const handlemouseLeave = () => {
     _imageMoving = false;
     _$visualizerImageContainer.classList.remove("visualizer__image--moving");
+  };
+
+  const nextImage = () => {
+    if (_imageIndex < _images.length - 1) {
+      _imageIndex++;
+      renderImage();
+      configButtons();
+    }
+  };
+
+  const previusImage = () => {
+    if (_imageIndex > 0) {
+      _imageIndex--;
+      renderImage();
+      configButtons();
+    }
+  };
+
+  const adjustTinyImage = () => {
+    let tinyImagesContainerBound = _$tinyImages.getBoundingClientRect(),
+      tinyImageBound = _images[_imageIndex].node.getBoundingClientRect(),
+      scrollLeft = _$tinyImages.scrollLeft,
+      scrollXCenter =
+        tinyImagesContainerBound.width / 2 - tinyImageBound.width / 2,
+      diffCenter = tinyImageBound.x - scrollXCenter;
+
+    _$tinyImages.scroll(scrollLeft + diffCenter, 0);
+    focusImage();
+  };
+
+  const focusImage = () => {
+    _images.forEach((img) => {
+      img.node.classList.remove("visualizer__tiny-image--focus");
+    });
+    _images[_imageIndex].node.classList.add("visualizer__tiny-image--focus");
   };
 
   const closeVisualizer = () => {
@@ -652,7 +736,7 @@ const optionsButton = ({ app, onPlusZoom, onMinusZoom, onRestore }) => {
     _$btnMinusZoom = document.getElementById("btn-minus-zoom");
     _$btnPlusZoom = document.getElementById("btn-plus-zoom");
     _$btnRestore = document.getElementById("btn-restore");
-    app.onClick(handleClick);
+    app.observer.onClick(handleClick);
   };
 
   const handleClick = (e) => {
@@ -697,6 +781,64 @@ const optionsButton = ({ app, onPlusZoom, onMinusZoom, onRestore }) => {
     desablePlusBtn,
   };
 };
+
+const createObserver = (media) => ({
+  _click: [],
+  _media: [],
+  _view: [],
+  _scroll: [],
+  onClick(funct) {
+    document.addEventListener("click", funct);
+    this._click.push(funct);
+  },
+  offClick(funct) {
+    document.removeEventListener("click", funct);
+    this._click = this._click.filter((f) => f !== funct);
+  },
+  onMediaChange(funct) {
+    media.large.addEventListener("change", funct);
+    media.middle.addEventListener("change", funct);
+    this._media.push(funct);
+  },
+  offMediaChange(funct) {
+    media.large.removeEventListener("change", funct);
+    media.middle.removeEventListener("change", funct);
+    this._media = this._media.filter((f) => f !== funct);
+  },
+  onScroll(funct) {
+    window.addEventListener("scroll", funct);
+    this._scroll.push(funct);
+  },
+  offScroll(funct) {
+    window.removeEventListener("scroll", funct);
+    this._scroll = this._scroll.filter((f) => f !== funct);
+  },
+  onViewChange(funct) {
+    this._view.push(funct);
+  },
+  offViewChange(funct) {
+    this._view = this._view.filter((f) => f !== funct);
+  },
+  triggerViewChange() {
+    this._view.forEach((f) => f());
+  },
+  clear() {
+    this._click.forEach((f) => {
+      document.removeEventListener("click", f);
+    });
+    this._media.forEach((f) => {
+      media.large.removeEventListener("change", f);
+      media.middle.removeEventListener("change", f);
+    });
+    this._scroll.forEach((f) => {
+      window.removeEventListener("scroll", f);
+    });
+    this._click.length = 0;
+    this._media.length = 0;
+    this._view.length = 0;
+    this._scroll.length = 0;
+  },
+});
 
 const appMedia = () => ({
   large: matchMedia("(min-width: 1024px)"),
