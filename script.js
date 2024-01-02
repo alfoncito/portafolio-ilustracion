@@ -213,8 +213,8 @@ const menuCtrl = (app) => {
     $navMenu.classList.add("flex-center");
     $btnClose = buttonElement({
       onClick: hiddeMenu,
-      iconPath: "icons/xmark-solid.svg",
-      classes: ["btn-close"],
+      iconPath: "icons/close.svg",
+      classes: ["btn", "btn-icon", "btn-close"],
     });
     $navMenu.appendChild($btnClose);
     $btnMenu.classList.remove("hidden");
@@ -244,7 +244,7 @@ const menuCtrl = (app) => {
 };
 
 const btnScroll = (app) => {
-  const SCROLL_TOP = 1000;
+  const SCROLL_TOP = 600;
 
   let $btn = document.getElementById("btn-scroll-top");
 
@@ -284,7 +284,7 @@ const imageVisualizerCtrl = (app) => {
         previusImage();
       },
     }),
-    zoomBtns = optionsButton({
+    _zoomBtns = optionsButton({
       app,
       onMinusZoom() {
         handleMinusZoom();
@@ -296,24 +296,25 @@ const imageVisualizerCtrl = (app) => {
         handleRestore();
       },
     }),
-    $btnMobileZoomPlus = buttonElement({
+    _$btnMobileZoomPlus = buttonElement({
       onClick() {
         _imageCtrl.plusZoom();
-        if (_imageCtrl.isMaxZoom()) $btnMobileZoomPlus.classList.add("desable");
-        $btnMobileZoomMinus.classList.remove("desable");
+        if (_imageCtrl.isMaxZoom())
+          _$btnMobileZoomPlus.classList.add("desable");
+        _$btnMobileZoomMinus.classList.remove("desable");
       },
-      iconPath: "icons/magnifying-glass-plus-solid.svg",
-      classes: ["mb-btn-zoom-plus"],
+      iconPath: "icons/zoom-in.svg",
+      classes: ["btn", "btn-round", "mb-btn-zoom-plus"],
     }),
-    $btnMobileZoomMinus = buttonElement({
+    _$btnMobileZoomMinus = buttonElement({
       onClick() {
         _imageCtrl.minusZoom();
         if (_imageCtrl.isMinZoom())
-          $btnMobileZoomMinus.classList.add("desable");
-        $btnMobileZoomPlus.classList.remove("desable");
+          _$btnMobileZoomMinus.classList.add("desable");
+        _$btnMobileZoomPlus.classList.remove("desable");
       },
-      iconPath: "icons/magnifying-glass-minus-solid.svg",
-      classes: ["mb-btn-zoom-minus"],
+      iconPath: "icons/zoom-out.svg",
+      classes: ["btn", "btn-round", "mb-btn-zoom-minus", "desable"],
     });
 
   const render = ($container, images, imageIndex) => {
@@ -322,8 +323,8 @@ const imageVisualizerCtrl = (app) => {
       .content.firstElementChild.cloneNode(true);
 
     $container.appendChild(_$visualizer);
-    $container.appendChild($btnMobileZoomMinus);
-    $container.appendChild($btnMobileZoomPlus);
+    $container.appendChild(_$btnMobileZoomMinus);
+    $container.appendChild(_$btnMobileZoomPlus);
     _images = images;
     _imageIndex = imageIndex;
     _$tinyImages = document.getElementById("tiny-images");
@@ -332,7 +333,7 @@ const imageVisualizerCtrl = (app) => {
     );
     _$title = document.getElementById("visualizer-title");
     changeImageBtns.render({ $container: _$visualizerImageContainer });
-    zoomBtns.render({
+    _zoomBtns.render({
       $container: document.getElementById("visualizer-buttons-container"),
     });
     renderTinyImages();
@@ -357,8 +358,8 @@ const imageVisualizerCtrl = (app) => {
     _imageCtrl.setImage(_images[_imageIndex].node.cloneNode());
     _imageCtrl.insertImage(_$visualizerImageContainer);
 
-    zoomBtns.enableMinusBtn();
-    zoomBtns.enablePlusBtn();
+    _zoomBtns.enableMinusBtn();
+    _zoomBtns.enablePlusBtn();
     _$title.textContent = _images[_imageIndex].sectName;
     adjustTinyImage();
   };
@@ -392,25 +393,21 @@ const imageVisualizerCtrl = (app) => {
   const handleMediaChange = () => {
     if (app.media.middle.matches) {
       changeImageBtns.showButtons();
-      zoomBtns.showButtons();
+      _zoomBtns.showButtons();
 
-      $btnMobileZoomMinus.classList.add("hidden");
-      $btnMobileZoomPlus.classList.add("hidden");
+      _$btnMobileZoomMinus.classList.add("hidden");
+      _$btnMobileZoomPlus.classList.add("hidden");
     } else {
       changeImageBtns.hiddenButtons();
-      zoomBtns.hiddenButtons();
+      _zoomBtns.hiddenButtons();
 
-      $btnMobileZoomMinus.classList.remove("hidden");
-      $btnMobileZoomPlus.classList.remove("hidden");
+      _$btnMobileZoomMinus.classList.remove("hidden");
+      _$btnMobileZoomPlus.classList.remove("hidden");
     }
   };
 
   const handleTouchStart = (e) => {
-    let now = Date.now();
-
     _firstTouch = e.touches[0];
-
-    if (now - _touchTimestamp <= 500) _imageCtrl.reset();
     _touchTimestamp = Date.now();
   };
 
@@ -428,6 +425,9 @@ const imageVisualizerCtrl = (app) => {
   };
 
   const handleTouchEnd = () => {
+    let now = Date.now();
+    if (now - _touchTimestamp <= 500) handleDblTouch();
+
     if (_prevTouch && _firstTouch) {
       let sc = _imageCtrl.sidesConstraint(),
         slideX = _prevTouch.pageX - _firstTouch.pageX;
@@ -439,22 +439,28 @@ const imageVisualizerCtrl = (app) => {
     _firstTouch = null;
   };
 
+  const handleDblTouch = () => {
+    _imageCtrl.reset();
+    _$btnMobileZoomPlus.classList.remove("desable");
+    _$btnMobileZoomMinus.classList.add("desable");
+  };
+
   const handleMinusZoom = () => {
     _imageCtrl.minusZoom();
-    if (_imageCtrl.isMinZoom()) zoomBtns.desableMinusBtn();
+    if (_imageCtrl.isMinZoom()) _zoomBtns.desableMinusBtn();
     if (!_imageCtrl.isMoveable)
       _$visualizerImageContainer.classList.remove(
         "visualizer__image--allow-move"
       );
-    zoomBtns.enablePlusBtn();
+    _zoomBtns.enablePlusBtn();
   };
 
   const handlePlusZoom = () => {
     _imageCtrl.plusZoom();
-    if (_imageCtrl.isMaxZoom()) zoomBtns.desablePlusBtn();
+    if (_imageCtrl.isMaxZoom()) _zoomBtns.desablePlusBtn();
     if (_imageCtrl.isMoveable)
       _$visualizerImageContainer.classList.add("visualizer__image--allow-move");
-    zoomBtns.enableMinusBtn();
+    _zoomBtns.enableMinusBtn();
   };
 
   const handleRestore = () => {
@@ -462,8 +468,8 @@ const imageVisualizerCtrl = (app) => {
     _$visualizerImageContainer.classList.remove(
       "visualizer__image--allow-move"
     );
-    zoomBtns.enableMinusBtn();
-    zoomBtns.enablePlusBtn();
+    _zoomBtns.enableMinusBtn();
+    _zoomBtns.enablePlusBtn();
   };
 
   const handleMouseDown = (e) => {
@@ -565,7 +571,6 @@ const buttonElement = ({ onClick, iconPath, classes }) => {
     $icon = document.createElement("img");
 
   $icon.src = iconPath;
-  $btn.classList.add("btn");
   if (classes) $btn.classList.add(...classes);
   $btn.appendChild($icon);
   $btn.addEventListener("click", onClick);
@@ -577,15 +582,15 @@ const nextBackImageBtns = ({ onNext, onPrevius }) => {
       onClick(e) {
         onPrevius(e);
       },
-      iconPath: "icons/arrow-left-long-solid.svg",
-      classes: ["visualizer__btn-previus"],
+      iconPath: "icons/arrow.svg",
+      classes: ["btn", "visualizer__btn-previus", "flex-center"],
     }),
     $btnRight = buttonElement({
       onClick(e) {
         onNext(e);
       },
-      iconPath: "icons/arrow-left-long-solid.svg",
-      classes: ["visualizer__btn-next"],
+      iconPath: "icons/arrow.svg",
+      classes: ["btn", "visualizer__btn-next", "flex-center"],
     });
 
   const render = ({ $container }) => {
@@ -631,8 +636,8 @@ const nextBackImageBtns = ({ onNext, onPrevius }) => {
 };
 
 const createImageCtrl = () => {
-  const MAX_ZOOM = 19,
-    MIN_ZOOM = 1,
+  const MAX_ZOOM = 25,
+    MIN_ZOOM = 10,
     INTERVAL_ZOOM = 1;
 
   return {

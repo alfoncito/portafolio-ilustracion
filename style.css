@@ -1,3 +1,5 @@
+/* @link https://utopia.fyi/type/calculator?c=320,12.8,1.2,1240,16,1.25,8,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
+
 :root {
   --color-jet: #292929;
   --color-platinum: #d9d9d9;
@@ -6,12 +8,25 @@
   --color-reseda-green-dark: #6b705c;
   --color-reseda-green-mediun: #82886f;
   --color-reseda-green-light: #b7b7a4;
+
+  --step--2: clamp(0.5556rem, 0.5263rem + 0.1467vw, 0.64rem);
+  --step--1: clamp(0.6669rem, 0.6206rem + 0.2315vw, 0.8rem);
+  --step-0: clamp(0.8rem, 0.7304rem + 0.3478vw, 1rem);
+  --step-1: clamp(0.96rem, 0.8591rem + 0.5043vw, 1.25rem);
+  --step-2: clamp(1.1519rem, 1.009rem + 0.7141vw, 1.5625rem);
+  --step-3: clamp(1.3825rem, 1.184rem + 0.9924vw, 1.9531rem);
+  --step-4: clamp(1.6588rem, 1.3866rem + 1.3609vw, 2.4413rem);
+  --step-5: clamp(1.9906rem, 1.6215rem + 1.8457vw, 3.0519rem);
+  --step-6: clamp(2.3888rem, 1.8927rem + 2.4804vw, 3.815rem);
+  --step-7: clamp(2.8663rem, 2.2047rem + 3.3076vw, 4.7681rem);
+  --step-8: clamp(3.44rem, 2.5633rem + 4.3837vw, 5.9606rem);
 }
 
 html {
   font-size: 16px;
   box-sizing: border-box;
   scroll-behavior: smooth;
+  color: var(--color-jet);
 }
 
 *,
@@ -50,18 +65,51 @@ img {
 }
 
 .front-header__title {
-  width: min(300px, 100%);
-  padding: 0 0.5rem;
-  margin: 0 0.5rem;
+  width: min(500px, 100%);
+  padding: 2rem;
+  margin: 0 1rem;
   backdrop-filter: blur(5px) brightness(0.95);
   border-radius: 0.5rem;
 }
 
-.btn-round {
-  display: block;
+.btn {
+  cursor: pointer;
+  transition: filter 100ms ease;
+  margin: 0 0.1rem;
+}
+
+.btn:hover {
+  filter: brightness(1.2);
+}
+
+.btn-icon {
+  background-color: #6b705c;
+  width: 35px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 35px;
   height: 35px;
   border-radius: 50%;
+}
+
+.btn-text {
+  background-color: #6b705c;
+  color: var(--color-reseda-green-light);
+  border-radius: 1rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  outline: none;
+}
+
+.btn-round {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 35px;
+  height: 35px;
+  background-color: var(--color-byzantium);
+  border-radius: 0.75rem;
   overflow: hidden;
 }
 
@@ -84,6 +132,14 @@ img {
   position: absolute;
   top: 1rem;
   right: 1rem;
+}
+
+.vert-separator {
+  display: inline-block;
+  background-color: var(--color-reseda-green-light);
+  width: 2px;
+  height: 100%;
+  margin: 0 0.5rem;
 }
 
 .nav-menu {
@@ -113,17 +169,29 @@ img {
   list-style-type: none;
   position: sticky;
   top: 0;
+  margin: 0;
+  padding: 2rem;
+}
+
+.nav-menu__li {
+  margin: 1rem 0;
 }
 
 .link {
   display: inline-block;
+  width: 100%;
   text-decoration: none;
+  color: var(--color-reseda-green-light);
+  font-size: var(--step-0);
+  font-family: serif;
+  font-weight: bold;
+  transition: transform 250ms ease;
 }
 
 .link:hover,
 .link--selected {
-  transform: translateX(20px);
-  color: red;
+  transform: translateX(15px);
+  color: var(--color-byzantium);
 }
 
 .main-grid {
@@ -140,6 +208,14 @@ img {
 }
 
 .sect-title--1 {
+  background-image: url(img/tetera.jpg);
+}
+
+.sect-title--2 {
+  background-image: url(img/tetera.jpg);
+}
+
+.sect-title--3 {
   background-image: url(img/tetera.jpg);
 }
 
@@ -183,6 +259,13 @@ img {
   padding: 1rem;
 }
 
+.visualizer__buttons-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
 .visualizer__image-container {
   width: 100%;
   height: 100%;
@@ -211,11 +294,15 @@ img {
   position: absolute;
   z-index: 20;
   top: 50%;
-  transform: translateY(-50%);
+  background-color: var(--color-reseda-green-mediun);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
 }
 
 .visualizer__btn-next {
   right: 2rem;
+  transform: rotate(0.5turn);
 }
 
 .visualizer__btn-previus {
@@ -255,13 +342,26 @@ img {
   bottom: 8rem;
 }
 
-.big-title {
-  font-size: 3rem;
+.main-title {
+  font-family: "Rosarivo", cursive;
+  font-style: italic;
+  font-size: var(--step-8);
+  line-height: 1;
+  margin: 0.5rem 0;
 }
 
 .title {
-  font-size: 2rem;
+  font-size: var(--step-3);
   color: var(--color-midnight-green);
+  font-family: "Rosarivo", cursive;
+  scroll-margin: 3rem;
+  margin: 0;
+}
+
+.sub-title {
+  font-family: "Rosarivo", cursive;
+  font-size: var(--step-1);
+  margin: 0;
 }
 
 .l-content {
