@@ -70,6 +70,17 @@ img {
   margin: 0 1rem;
   backdrop-filter: blur(5px) brightness(0.95);
   border-radius: 0.5rem;
+  animation: anim-pulse-blur 2s ease 0ms infinite alternate forwards;
+}
+
+.front-header__title-left {
+  animation: anim-fade-in 1000ms ease 0s 1 normal both,
+    anim-x-slice 1000ms ease-out 0s normal both;
+}
+
+.front-header__title-right {
+  animation: anim-fade-in 1000ms ease 0s 1 normal both,
+    anim-inverse-x-slice 1000ms ease-out 0s normal both;
 }
 
 .btn {
@@ -226,12 +237,16 @@ img {
 }
 
 .image {
+  position: relative;
   cursor: pointer;
   opacity: 0;
+  transition: bottom 200ms ease;
 }
 
 .image:hover {
-  transform: translateY(-1rem);
+  /* transform: translateY(-1rem); */
+  bottom: 0.25rem;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
 }
 
 .slice-fade-in {
@@ -246,7 +261,6 @@ img {
 }
 
 .visualizer {
-  background-color: #f005;
   overflow: hidden;
   display: grid;
   grid-template-rows: max-content 1fr max-content;
@@ -256,7 +270,7 @@ img {
   display: flex;
   justify-content: space-between;
   background-color: var(--color-reseda-green-dark);
-  padding: 1rem;
+  padding: 0.5rem 1rem;
 }
 
 .visualizer__buttons-container {
@@ -315,6 +329,7 @@ img {
   background-color: var(--color-reseda-green-dark);
   overflow-x: auto;
   overflow-y: hidden;
+  scroll-behavior: smooth;
 }
 
 .visualizer__tiny-image {
@@ -326,6 +341,7 @@ img {
 }
 
 .visualizer__tiny-image--focus {
+  box-shadow: var(--color-byzantium) 0px 0px 0px 3px;
 }
 
 .mb-btn-zoom-plus,
@@ -362,6 +378,7 @@ img {
   font-family: "Rosarivo", cursive;
   font-size: var(--step-1);
   margin: 0;
+  animation: anim-slice-fade-in 300ms ease-out 1s 1 normal both;
 }
 
 .l-content {
@@ -428,7 +445,7 @@ img {
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 850px) {
   .images-container {
     grid-template-columns: 1fr 1fr 1fr;
   }
@@ -450,6 +467,9 @@ img {
   }
 }
 
+@media (min-width: 1024px) {
+}
+
 @keyframes anim-slice-fade-in {
   from {
     opacity: 0;
@@ -459,5 +479,45 @@ img {
   to {
     opacity: 1;
     transform: translateY(0px);
+  }
+}
+
+@keyframes anim-pulse-blur {
+  from {
+    backdrop-filter: blur(1px);
+  }
+
+  to {
+    backdrop-filter: blur(5px);
+  }
+}
+
+@keyframes anim-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes anim-x-slice {
+  from {
+    transform: translateX(-100px);
+  }
+
+  to {
+    transform: translateX(0px);
+  }
+}
+
+@keyframes anim-inverse-x-slice {
+  from {
+    transform: translateX(100px);
+  }
+
+  to {
+    transform: translateX(0px);
   }
 }

@@ -362,6 +362,7 @@ const imageVisualizerCtrl = (app) => {
     _zoomBtns.enablePlusBtn();
     _$title.textContent = _images[_imageIndex].sectName;
     adjustTinyImage();
+    adjustZoomBtns();
   };
 
   const renderTinyImages = () => {
@@ -408,7 +409,6 @@ const imageVisualizerCtrl = (app) => {
 
   const handleTouchStart = (e) => {
     _firstTouch = e.touches[0];
-    _touchTimestamp = Date.now();
   };
 
   const handleTouchMove = (e) => {
@@ -426,6 +426,7 @@ const imageVisualizerCtrl = (app) => {
 
   const handleTouchEnd = () => {
     let now = Date.now();
+
     if (now - _touchTimestamp <= 500) handleDblTouch();
 
     if (_prevTouch && _firstTouch) {
@@ -437,6 +438,7 @@ const imageVisualizerCtrl = (app) => {
     }
     _prevTouch = null;
     _firstTouch = null;
+    _touchTimestamp = Date.now();
   };
 
   const handleDblTouch = () => {
@@ -468,8 +470,7 @@ const imageVisualizerCtrl = (app) => {
     _$visualizerImageContainer.classList.remove(
       "visualizer__image--allow-move"
     );
-    _zoomBtns.enableMinusBtn();
-    _zoomBtns.enablePlusBtn();
+    adjustZoomBtns();
   };
 
   const handleMouseDown = (e) => {
@@ -506,6 +507,11 @@ const imageVisualizerCtrl = (app) => {
       renderImage();
       configButtons();
     }
+  };
+
+  const adjustZoomBtns = () => {
+    _zoomBtns.desableMinusBtn();
+    _zoomBtns.enablePlusBtn();
   };
 
   const adjustTinyImage = () => {
@@ -638,7 +644,7 @@ const nextBackImageBtns = ({ onNext, onPrevius }) => {
 const createImageCtrl = () => {
   const MAX_ZOOM = 25,
     MIN_ZOOM = 10,
-    INTERVAL_ZOOM = 1;
+    INTERVAL_ZOOM = 2;
 
   return {
     _$image: null,
