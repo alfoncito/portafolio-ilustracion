@@ -284,7 +284,7 @@ const imageVisualizerCtrl = (app) => {
         previusImage();
       },
     }),
-    _zoomBtns = optionsButton({
+    _zoomBtns = createZoomBtns({
       app,
       onMinusZoom() {
         handleMinusZoom();
@@ -295,26 +295,6 @@ const imageVisualizerCtrl = (app) => {
       onRestore() {
         handleRestore();
       },
-    }),
-    _$btnMobileZoomPlus = buttonElement({
-      onClick() {
-        _imageCtrl.plusZoom();
-        if (_imageCtrl.isMaxZoom())
-          _$btnMobileZoomPlus.classList.add("desable");
-        _$btnMobileZoomMinus.classList.remove("desable");
-      },
-      iconPath: "icons/zoom-in.svg",
-      classes: ["btn", "btn-round", "mb-btn-zoom-plus"],
-    }),
-    _$btnMobileZoomMinus = buttonElement({
-      onClick() {
-        _imageCtrl.minusZoom();
-        if (_imageCtrl.isMinZoom())
-          _$btnMobileZoomMinus.classList.add("desable");
-        _$btnMobileZoomPlus.classList.remove("desable");
-      },
-      iconPath: "icons/zoom-out.svg",
-      classes: ["btn", "btn-round", "mb-btn-zoom-minus", "desable"],
     });
 
   const render = ($container, images, imageIndex) => {
@@ -323,8 +303,6 @@ const imageVisualizerCtrl = (app) => {
       .content.firstElementChild.cloneNode(true);
 
     $container.appendChild(_$visualizer);
-    $container.appendChild(_$btnMobileZoomMinus);
-    $container.appendChild(_$btnMobileZoomPlus);
     _images = images;
     _imageIndex = imageIndex;
     _$tinyImages = document.getElementById("tiny-images");
@@ -334,11 +312,12 @@ const imageVisualizerCtrl = (app) => {
     _$title = document.getElementById("visualizer-title");
     changeImageBtns.render({ $container: _$visualizerImageContainer });
     _zoomBtns.render({
-      $container: document.getElementById("visualizer-buttons-container"),
+      $btnsContaine: document.getElementById("visualizer-buttons-container"),
+      $imageContainer: $container,
     });
     renderTinyImages();
     renderImage();
-    configButtons();
+    adjustNextPrevBtns();
     handleMediaChange();
     _$visualizerImageContainer.addEventListener("touchmove", handleTouchMove);
     _$visualizerImageContainer.addEventListener("touchend", handleTouchEnd);
@@ -358,11 +337,9 @@ const imageVisualizerCtrl = (app) => {
     _imageCtrl.setImage(_images[_imageIndex].node.cloneNode());
     _imageCtrl.insertImage(_$visualizerImageContainer);
 
-    _zoomBtns.enableMinusBtn();
-    _zoomBtns.enablePlusBtn();
     _$title.textContent = _images[_imageIndex].sectName;
     adjustTinyImage();
-    adjustZoomBtns();
+    resetZoomBtns();
   };
 
   const renderTinyImages = () => {
@@ -386,7 +363,7 @@ const imageVisualizerCtrl = (app) => {
       if (index !== _imageIndex) {
         _imageIndex = index;
         renderImage();
-        configButtons();
+        adjustNextPrevBtns();
       }
     }
   };
@@ -394,16 +371,8 @@ const imageVisualizerCtrl = (app) => {
   const handleMediaChange = () => {
     if (app.media.middle.matches) {
       changeImageBtns.showButtons();
-      _zoomBtns.showButtons();
-
-      _$btnMobileZoomMinus.classList.add("hidden");
-      _$btnMobileZoomPlus.classList.add("hidden");
     } else {
       changeImageBtns.hiddenButtons();
-      _zoomBtns.hiddenButtons();
-
-      _$btnMobileZoomMinus.classList.remove("hidden");
-      _$btnMobileZoomPlus.classList.remove("hidden");
     }
   };
 
@@ -438,13 +407,12 @@ const imageVisualizerCtrl = (app) => {
     }
     _prevTouch = null;
     _firstTouch = null;
-    _touchTimestamp = Date.now();
+    _touchTimestamp = now;
   };
 
   const handleDblTouch = () => {
     _imageCtrl.reset();
-    _$btnMobileZoomPlus.classList.remove("desable");
-    _$btnMobileZoomMinus.classList.add("desable");
+    resetZoomBtns();
   };
 
   const handleMinusZoom = () => {
@@ -470,7 +438,7 @@ const imageVisualizerCtrl = (app) => {
     _$visualizerImageContainer.classList.remove(
       "visualizer__image--allow-move"
     );
-    adjustZoomBtns();
+    resetZoomBtns();
   };
 
   const handleMouseDown = (e) => {
@@ -497,7 +465,7 @@ const imageVisualizerCtrl = (app) => {
     if (_imageIndex < _images.length - 1) {
       _imageIndex++;
       renderImage();
-      configButtons();
+      adjustNextPrevBtns();
     }
   };
 
@@ -505,11 +473,11 @@ const imageVisualizerCtrl = (app) => {
     if (_imageIndex > 0) {
       _imageIndex--;
       renderImage();
-      configButtons();
+      adjustNextPrevBtns();
     }
   };
 
-  const adjustZoomBtns = () => {
+  const resetZoomBtns = () => {
     _zoomBtns.desableMinusBtn();
     _zoomBtns.enablePlusBtn();
   };
@@ -527,10 +495,14 @@ const imageVisualizerCtrl = (app) => {
   };
 
   const focusImage = () => {
+    blurAllImages();
+    _images[_imageIndex].node.classList.add("visualizer__tiny-image--focus");
+  };
+
+  const blurAllImages = () => {
     _images.forEach((img) => {
       img.node.classList.remove("visualizer__tiny-image--focus");
     });
-    _images[_imageIndex].node.classList.add("visualizer__tiny-image--focus");
   };
 
   const closeVisualizer = () => {
@@ -541,7 +513,7 @@ const imageVisualizerCtrl = (app) => {
     app.changeView("gallery");
   };
 
-  const configButtons = () => {
+  const adjustNextPrevBtns = () => {
     if (_imageIndex >= _images.length - 1) changeImageBtns.desableRight();
     else changeImageBtns.enableRight();
 
@@ -572,29 +544,14 @@ const imagesGallery = () => {
   return arrResult;
 };
 
-const buttonElement = ({ onClick, iconPath, classes }) => {
-  let $btn = document.createElement("div"),
-    $icon = document.createElement("img");
-
-  $icon.src = iconPath;
-  if (classes) $btn.classList.add(...classes);
-  $btn.appendChild($icon);
-  $btn.addEventListener("click", onClick);
-  return $btn;
-};
-
 const nextBackImageBtns = ({ onNext, onPrevius }) => {
   let $btnLeft = buttonElement({
-      onClick(e) {
-        onPrevius(e);
-      },
+      onClick: onPrevius,
       iconPath: "icons/arrow.svg",
       classes: ["btn", "visualizer__btn-previus", "flex-center"],
     }),
     $btnRight = buttonElement({
-      onClick(e) {
-        onNext(e);
-      },
+      onClick: onNext,
       iconPath: "icons/arrow.svg",
       classes: ["btn", "visualizer__btn-next", "flex-center"],
     });
@@ -734,65 +691,108 @@ const createImageCtrl = () => {
   };
 };
 
-const optionsButton = ({ app, onPlusZoom, onMinusZoom, onRestore }) => {
-  let _$buttons = null,
-    _$btnPlusZoom = null,
-    _$btnMinusZoom = null,
-    _$btnRestore = null;
+const createZoomBtns = ({ app, onPlusZoom, onMinusZoom, onRestore }) => {
+  let _$desktopButtons = null,
+    _$mbBtnPlusZoom = null,
+    _$mbBtnMinusZoom = null,
+    _$dtBtnPlusZoom = null,
+    _$dtBtnMinusZoom = null,
+    _$dtBtnRestore = null;
 
-  const render = ({ $container }) => {
-    _$buttons = document
+  const render = ({ $btnsContaine, $imageContainer }) => {
+    _$desktopButtons = document
       .getElementById("visualizer-buttons-template")
       .content.firstElementChild.cloneNode(true);
 
-    $container.prepend(_$buttons);
-    _$btnMinusZoom = document.getElementById("btn-minus-zoom");
-    _$btnPlusZoom = document.getElementById("btn-plus-zoom");
-    _$btnRestore = document.getElementById("btn-restore");
+    $btnsContaine.prepend(_$desktopButtons);
+
+    _$dtBtnMinusZoom = document.getElementById("btn-minus-zoom");
+    _$dtBtnPlusZoom = document.getElementById("btn-plus-zoom");
+    _$dtBtnRestore = document.getElementById("btn-restore");
+
+    _$mbBtnPlusZoom = buttonElement({
+      onClick: onPlusZoom,
+      iconPath: "icons/zoom-in.svg",
+      classes: ["btn", "btn-round", "mb-btn-zoom-plus"],
+    });
+    _$mbBtnMinusZoom = buttonElement({
+      onClick: onMinusZoom,
+      iconPath: "icons/zoom-out.svg",
+      classes: ["btn", "btn-round", "mb-btn-zoom-minus"],
+    });
+    $imageContainer.appendChild(_$mbBtnMinusZoom);
+    $imageContainer.appendChild(_$mbBtnPlusZoom);
+
+    handleMediaChange();
     app.observer.onClick(handleClick);
-  };
-
-  const handleClick = (e) => {
-    let target = e.target;
-
-    if (target === _$btnRestore) onRestore(e);
-    else if (target === _$btnMinusZoom) onMinusZoom(e);
-    else if (target === _$btnPlusZoom) onPlusZoom(e);
-  };
-
-  const showButtons = () => {
-    _$buttons.classList.remove("hidden");
-  };
-
-  const hiddenButtons = () => {
-    _$buttons.classList.add("hidden");
+    app.observer.onMediaChange(handleMediaChange);
   };
 
   const enablePlusBtn = () => {
-    _$btnPlusZoom.classList.remove("desable");
+    _$mbBtnPlusZoom.classList.remove("desable");
+    _$dtBtnPlusZoom.classList.remove("desable");
   };
 
   const desablePlusBtn = () => {
-    _$btnPlusZoom.classList.add("desable");
+    _$mbBtnPlusZoom.classList.add("desable");
+    _$dtBtnPlusZoom.classList.add("desable");
   };
 
   const enableMinusBtn = () => {
-    _$btnMinusZoom.classList.remove("desable");
+    _$mbBtnMinusZoom.classList.remove("desable");
+    _$dtBtnMinusZoom.classList.remove("desable");
   };
 
   const desableMinusBtn = () => {
-    _$btnMinusZoom.classList.add("desable");
+    _$mbBtnMinusZoom.classList.add("desable");
+    _$dtBtnMinusZoom.classList.add("desable");
+  };
+
+  const handleClick = (e) => {
+    let $tg = e.target;
+
+    if ($tg === _$dtBtnPlusZoom) onPlusZoom(e);
+    else if ($tg === _$dtBtnMinusZoom) onMinusZoom(e);
+    else if ($tg === _$dtBtnRestore) onRestore(e);
+  };
+
+  const handleMediaChange = () => {
+    if (app.media.middle.matches) desktopMode();
+    else mobileMode();
+  };
+
+  const desktopMode = () => {
+    _$mbBtnMinusZoom.classList.add("hidden");
+    _$mbBtnPlusZoom.classList.add("hidden");
+
+    _$desktopButtons.classList.remove("hidden");
+  };
+
+  const mobileMode = () => {
+    _$desktopButtons.classList.add("hidden");
+
+    _$mbBtnMinusZoom.classList.remove("hidden");
+    _$mbBtnPlusZoom.classList.remove("hidden");
   };
 
   return {
     render,
-    showButtons,
-    hiddenButtons,
-    enableMinusBtn,
     enablePlusBtn,
-    desableMinusBtn,
     desablePlusBtn,
+    enableMinusBtn,
+    desableMinusBtn,
   };
+};
+
+const buttonElement = ({ onClick, iconPath, classes }) => {
+  let $btn = document.createElement("div"),
+    $icon = document.createElement("img");
+
+  $icon.src = iconPath;
+  if (classes) $btn.classList.add(...classes);
+  $btn.appendChild($icon);
+  if (onClick) $btn.addEventListener("click", onClick);
+  return $btn;
 };
 
 const createObserver = (media) => ({
