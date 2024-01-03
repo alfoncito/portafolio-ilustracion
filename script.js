@@ -694,20 +694,22 @@ const createImageCtrl = () => {
       if ((x > 0 && !sc.right) || (x < 0 && !sc.left))
         this._offsetX += (x * 10) / this._zoom;
 
-      if ((y > 0 && !sc.top) || (y < 0 && !sc.bottom))
+      if ((y > 0 && !sc.bottom) || (y < 0 && !sc.top))
         this._offsetY += (y * 10) / this._zoom;
 
       this._transformImage();
     },
     sidesConstraint() {
       if (this.isMoveable) {
-        let imgBound = this._$image.getBoundingClientRect();
+        let imgBound = this._$image.getBoundingClientRect(),
+          windowHalfWidth = window.innerWidth / 2,
+          windowHalfHeight = window.innerHeight / 2;
 
         return {
-          top: imgBound.y > imgBound.height / 2,
-          bottom: imgBound.y + imgBound.height / 2 < 0,
-          right: imgBound.x > imgBound.width / 2,
-          left: imgBound.x + imgBound.width / 2 < 0,
+          top: imgBound.y + imgBound.height <= windowHalfHeight,
+          right: imgBound.x >= windowHalfWidth,
+          bottom: imgBound.y >= windowHalfHeight,
+          left: imgBound.x + imgBound.width <= windowHalfWidth,
         };
       } else {
         return {

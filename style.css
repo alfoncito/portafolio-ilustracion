@@ -291,7 +291,6 @@ img {
   height: 100%;
   object-fit: contain;
   max-height: calc(100vh - 230px);
-  transition: transform 200ms ease;
   user-select: none;
 }
 
